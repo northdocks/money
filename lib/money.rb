@@ -2,9 +2,11 @@ require 'support/cattr_accessor'
 require 'money/bank/no_exchange_bank'
 require 'money/bank/variable_exchange_bank'
 require 'money/core_extensions'
+require 'currency'
 
 class Money
   include Comparable
+  include ActionView::Helpers::NumberHelper
 
   attr_reader :cents, :currency, :precision
 
@@ -112,8 +114,16 @@ class Money
     return self.class.zero if zero? && self.class.zero
     
     rules = rules.flatten
+    
+    curr = Currency.find(currency)
+    
+    str = if rules.include?(:no_delimiter)
+      to_s(rules.include?(:no_cents) ? 0 : 2)
+    else
+      number_with_delimiter(to_s(rules.include?(:no_cents) ? 0 : 2))
+    end # if rules.include?(:comma)
 
-    formatted = "$" + to_s(rules.include?(:no_cents) ? 0 : 2)
+    formatted = "#{curr.sign unless rules.include?(:no_sign)}#{str}"
 
     if rules.include?(:with_currency)
       formatted << " "

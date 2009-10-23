@@ -7,6 +7,7 @@ describe Money do
     @can2  = Money.ca_dollar(200)
     @can3  = Money.ca_dollar(300)
     @us1   = Money.us_dollar(100)
+    @eur   = Money.new(100, "EUR")
     
     Money.bank = NoExchangeBank.new
     Money.default_currency = "USD"
@@ -162,6 +163,12 @@ describe Money do
       Money.zero = 'zilch'
       Money.empty.format.should == 'zilch'
       Money.zero = nil # reset back to default
+    end
+    
+    describe "with alternate currency" do
+      it "should format with the Euro symbol" do
+        @eur.format.should == "€1.00"
+      end
     end
 
   end
