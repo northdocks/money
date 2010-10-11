@@ -3,6 +3,7 @@ require 'money/bank/no_exchange_bank'
 require 'money/bank/variable_exchange_bank'
 require 'money/core_extensions'
 require 'currency'
+require 'money/rails'
 
 class Money
   include Comparable
