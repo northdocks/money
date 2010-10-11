@@ -29,7 +29,7 @@ class Currency
   
   attr_accessor :name, :sign, :iso_code, :fractional_monitary_unit, :number_to_basic, :position
   def initialize(params={})
-    params.each { |k, v| send("#{k}=", v)}
+    params.each { |k, v| send("#{k}=", v)} if params
   end
   
   @@iso_codes = {
