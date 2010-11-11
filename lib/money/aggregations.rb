@@ -9,7 +9,7 @@ module ActiveRecord
         module_eval do
           define_method(name) do |*args|
             force_reload = args.first || false
-            if (instance_variable_get("@#{name}").nil? || force_reload) && (!allow_nil || mapping.any? {|pair| !read_attribute(pair.first).nil? })
+            if (instance_variable_get("@#{name}").nil? || force_reload) && (!allow_nil || mapping.any? {|pair| !send(pair.first).nil? })
               attrs = mapping.collect {|pair| send(pair.first)}
               object = case constructor
                 when Symbol

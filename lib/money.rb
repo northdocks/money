@@ -113,26 +113,24 @@ class Money
   #  Money.ca_dollar(570).format(:html, :with_currency) =>  "$5.70 <span class=\"currency\">CAD</span>"
   def format(*rules)
     return self.class.zero if zero? && self.class.zero
-    
     rules = rules.flatten
-    
     curr = Currency.find(currency)
+    options = {
+      :separator => curr.separator, 
+      :delimiter => curr.delimiter, 
+      :format => curr.format,
+      :unit => (curr.unit unless rules.include?(:no_sign)),
+      :precision => (0 if rules.include?(:no_cents))
+    }
     
-    str = if rules.include?(:no_delimiter)
-      to_s(rules.include?(:no_cents) ? 0 : 2)
-    else
-      number_with_delimiter(to_s(rules.include?(:no_cents) ? 0 : 2))
-    end # if rules.include?(:comma)
-
-    formatted = "#{curr.sign unless rules.include?(:no_sign)}#{str}"
-
+    formatted = number_to_currency(cents/100.0, options)
     if rules.include?(:with_currency)
       formatted << " "
       formatted << '<span class="currency">' if rules.include?(:html)
       formatted << currency
       formatted << '</span>' if rules.include?(:html)
     end
-    formatted
+    return formatted
   end
 
   # Money.ca_dollar(100).to_s => "1.00"
