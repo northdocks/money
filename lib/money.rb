@@ -128,7 +128,7 @@ class Money
 
     if rules.include?(:with_currency)
       if rules.include?(:html)
-        "#{ERB::Util.html_escape(formatted)} <span class=\"currency\">#{ERB::Util.html_escape(currency)}</span>".html_safe
+        "#{formatted} <span class=\"currency\">#{ERB::Util.html_escape(currency)}</span>".html_safe
       else
         "#{formatted} #{currency}"
       end
