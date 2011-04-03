@@ -1,217 +1,50 @@
 require 'rubygems'
+require 'bundler'
+begin
+  Bundler.setup(:default, :development)
+rescue Bundler::BundlerError => e
+  $stderr.puts e.message
+  $stderr.puts "Run `bundle install` to install missing gems"
+  exit e.status_code
+end
 require 'rake'
-require 'spec/rake/spectask'
+
+require 'jeweler'
+Jeweler::Tasks.new do |gem|
+  # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
+  gem.name = "money"
+  gem.homepage = "http://github.com/northdocks/money"
+  gem.license = "MIT"
+  gem.summary = %Q{Class aiding in the handling of Money.}
+  gem.description = %Q{Class aiding in the handling of Money and Currencies. It supports easy pluggable bank objects for customized exchange strategies. Can be used as composite in ActiveRecord tables.}
+  gem.email = "info@northdocks.com"
+  gem.authors = ["Daniel Morrison", "Brandon Keepers", "Tobias Luetke", "Marcel Jackwerth"]
+  # Include your dependencies below. Runtime dependencies are required when using your gem,
+  # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
+  #  gem.add_runtime_dependency 'jabber4r', '> 0.1'
+  #  gem.add_development_dependency 'rspec', '> 1.2.3'
+end
+Jeweler::RubygemsDotOrgTasks.new
+
+require 'rspec/core'
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new(:spec) do |spec|
+  spec.pattern = FileList['spec/**/*_spec.rb']
+end
+
+RSpec::Core::RakeTask.new(:rcov) do |spec|
+  spec.pattern = 'spec/**/*_spec.rb'
+  spec.rcov = true
+end
+
+task :default => :spec
+
 require 'rake/rdoctask'
-require 'rake/gempackagetask'
-require 'rake/contrib/rubyforgepublisher'
-require 'fileutils'
+Rake::RDocTask.new do |rdoc|
+  version = File.exist?('VERSION') ? File.read('VERSION') : ""
 
-spec = eval(File.read("#{File.dirname(__FILE__)}/money.gemspec"))
-PKG_NAME = spec.name
-PKG_VERSION = spec.version
-PKG_FILE_NAME = "#{PKG_NAME}-#{PKG_VERSION}"
-
-
-# fix for ruby 1.9.4's fileutils.rb
-module FileUtils
-  def cd(dir, options = {}, &block) # :yield: dir
-    fu_check_options options, :verbose, :noop
-    fu_output_message "cd #{dir}" if options[:verbose]
-    Dir.chdir(dir, &block)
-    fu_output_message 'cd -' if options[:verbose] and block
-  end
-  module_function :cd
-
-  alias chdir cd
-  module_function :chdir
-
-  OPT_TABLE['cd']    =
-  OPT_TABLE['chdir'] = %w( verbose )
-end
-
-PKG_FILES = FileList[
-    "lib/**/*", "spec/*", "[A-Z]*", "rakefile"
-].exclude(/\bCVS\b|~$/)
-
-desc "Default Task"
-task :default => [ :spec ]
-
-desc "Delete tar.gz / zip / rdoc"
-task :cleanup => [ :rm_packages, :clobber_rdoc ]
-
-Spec::Rake::SpecTask.new
-
-task :install => [:package] do
-  `gem install pkg/#{PKG_FILE_NAME}.gem`
-end
-
-# Genereate the RDoc documentation
-
-Rake::RDocTask.new { |rdoc|
-  rdoc.rdoc_dir = 'doc'
-  rdoc.title    = "Money library"
-  rdoc.options << '--line-numbers --inline-source'
-  rdoc.rdoc_files.include('README')
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title = "money #{version}"
+  rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
-}
-
-task :lines do
-  lines = 0
-  codelines = 0
-  Dir.foreach("lib") { |file_name| 
-    next unless file_name =~ /.*rb/
-    
-    f = File.open("lib/" + file_name)
-
-    while line = f.gets
-      lines += 1
-      next if line =~ /^\s*$/
-      next if line =~ /^\s*#/
-      codelines += 1
-    end
-  }
-  puts "Lines #{lines}, LOC #{codelines}"
-end
-
-
-# Publish beta gem  
-desc "Publish the gem on leetsoft"
-task :publish => [:rdoc, :package] do
-  Rake::SshFilePublisher.new("leetsoft.com", "dist/pkg", "pkg", "#{PKG_FILE_NAME}.zip").upload
-  Rake::SshFilePublisher.new("leetsoft.com", "dist/pkg", "pkg", "#{PKG_FILE_NAME}.tgz").upload
-  Rake::SshFilePublisher.new("leetsoft.com", "dist/gems", "pkg", "#{PKG_FILE_NAME}.gem").upload
-
-  `ssh tobi@leetsoft.com "mkdir -p dist/api/#{PKG_NAME}"`
-  Rake::SshDirPublisher.new("leetsoft.com", "dist/api/#{PKG_NAME}", "doc").upload
-  `ssh tobi@leetsoft.com './gemupdate'`
-  `rm -rf pkg/`
-  `rm -rf doc/`
-end
-
-
-Rake::GemPackageTask.new(spec) do |p|
-  p.gem_spec = spec
-  p.need_tar = true
-  p.need_zip = true
-end
-
-# --- Ruby forge release manager by florian gross -------------------------------------------------
-
-RUBY_FORGE_PROJECT = 'money'
-RUBY_FORGE_USER = 'xal'
-RELEASE_NAME  = "REL #{PKG_VERSION}"
-
-desc "Publish the release files to RubyForge."
-task :release => [:gem] do
-  files = ["gem"].map { |ext| "pkg/#{PKG_FILE_NAME}.#{ext}" }
-
-  if RUBY_FORGE_PROJECT then
-    require 'net/http'
-    require 'open-uri'
-
-    project_uri = "http://rubyforge.org/projects/#{RUBY_FORGE_PROJECT}/"
-    project_data = open(project_uri) { |data| data.read }
-    group_id = project_data[/[?&]group_id=(\d+)/, 1]
-    raise "Couldn't get group id" unless group_id
-
-    # This echos password to shell which is a bit sucky
-    if ENV["RUBY_FORGE_PASSWORD"]
-      password = ENV["RUBY_FORGE_PASSWORD"]
-    else
-      print "#{RUBY_FORGE_USER}@rubyforge.org's password: "
-      password = STDIN.gets.chomp
-    end
-
-    login_response = Net::HTTP.start("rubyforge.org", 80) do |http|
-      data = [
-        "login=1",
-        "form_loginname=#{RUBY_FORGE_USER}",
-        "form_pw=#{password}"
-      ].join("&")
-      http.post("/account/login.php", data)
-    end
-
-    cookie = login_response["set-cookie"]
-    raise "Login failed" unless cookie
-    headers = { "Cookie" => cookie }
-
-    release_uri = "http://rubyforge.org/frs/admin/?group_id=#{group_id}"
-    release_data = open(release_uri, headers) { |data| data.read }
-    package_id = release_data[/[?&]package_id=(\d+)/, 1]
-    raise "Couldn't get package id" unless package_id
-
-    first_file = true
-    release_id = ""
-
-    files.each do |filename|
-      basename  = File.basename(filename)
-      file_ext  = File.extname(filename)
-      file_data = File.open(filename, "rb") { |file| file.read }
-
-      puts "Releasing #{basename}..."
-
-      release_response = Net::HTTP.start("rubyforge.org", 80) do |http|
-        release_date = Time.now.strftime("%Y-%m-%d %H:%M")
-        type_map = {
-          ".zip"    => "3000",
-          ".tgz"    => "3110",
-          ".gz"     => "3110",
-          ".gem"    => "1400"
-        }; type_map.default = "9999"
-        type = type_map[file_ext]
-        boundary = "rubyqMY6QN9bp6e4kS21H4y0zxcvoor"
-
-        query_hash = if first_file then
-          {
-            "group_id" => group_id,
-            "package_id" => package_id,
-            "release_name" => RELEASE_NAME,
-            "release_date" => release_date,
-            "type_id" => type,
-            "processor_id" => "8000", # Any
-            "release_notes" => "",
-            "release_changes" => "",
-            "preformatted" => "1",
-            "submit" => "1"
-          }
-        else
-          {
-            "group_id" => group_id,
-            "release_id" => release_id,
-            "package_id" => package_id,
-            "step2" => "1",
-            "type_id" => type,
-            "processor_id" => "8000", # Any
-            "submit" => "Add This File"
-          }
-        end
-
-        query = "?" + query_hash.map do |(name, value)|
-          [name, URI.encode(value)].join("=")
-        end.join("&")
-
-        data = [
-          "--" + boundary,
-          "Content-Disposition: form-data; name=\"userfile\"; filename=\"#{basename}\"",
-          "Content-Type: application/octet-stream",
-          "Content-Transfer-Encoding: binary",
-          "", file_data, ""
-          ].join("\x0D\x0A")
-
-        release_headers = headers.merge(
-          "Content-Type" => "multipart/form-data; boundary=#{boundary}"
-        )
-
-        target = first_file ? "/frs/admin/qrs.php" : "/frs/admin/editrelease.php"
-        http.post(target + query, data, release_headers)
-      end
-
-      if first_file then
-        release_id = release_response.body[/release_id=(\d+)/, 1]
-        raise("Couldn't get release id") unless release_id
-      end
-
-      first_file = false
-    end
-  end
 end
