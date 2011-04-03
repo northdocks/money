@@ -19,6 +19,8 @@ Jeweler::Tasks.new do |gem|
   gem.description = %Q{Class aiding in the handling of Money and Currencies. It supports easy pluggable bank objects for customized exchange strategies. Can be used as composite in ActiveRecord tables.}
   gem.email = "info@northdocks.com"
   gem.authors = ["Daniel Morrison", "Brandon Keepers", "Tobias Luetke", "Marcel Jackwerth"]
+
+  gem.add_runtime_dependency 'rails', '>= 3.0.0'
   # Include your dependencies below. Runtime dependencies are required when using your gem,
   # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
   #  gem.add_runtime_dependency 'jabber4r', '> 0.1'
