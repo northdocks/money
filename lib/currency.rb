@@ -1,5 +1,5 @@
 class Currency
-  
+
   class<<self
     def find(iso_code)
       self.new(@@iso_codes[iso_code.to_s.downcase.intern])
@@ -11,31 +11,41 @@ class Currency
       @@iso_codes
     end
   end
-  
+
   def <=>(o)
     [self.position, self.name] <=> [o.position, o.name]
   end
-  
+
   def description
     # ["#{name}#{(iso_code.nil? ? "" : " (#{iso_code})")}", sign].compact.join(" - ")
     # ["#{name} - #{sign}", iso_code].compact.join(" ")
     # [name, sign].compact.join(" - ") + (iso_code.nil? ? "" : " (#{iso_code})")
     [iso_code, "#{name} (#{sign})"].join(" - ")
   end
-  
+
   def to_s
     iso_code
   end
-  
+
   def unit
     sign
   end
-  
+
+  def precision
+    n = number_to_basic.to_i
+
+    if n.zero?
+      0
+    else
+      (n - 1).to_s.length
+    end
+  end
+
   attr_accessor :name, :sign, :iso_code, :format, :separator, :delimiter, :fractional_monitary_unit, :number_to_basic, :position
   def initialize(params={})
     params.each { |k, v| send("#{k}=", v)} if params
   end
-  
+
   @@iso_codes = {
     :usd => {:position => 1,   :name => "United States Dollar",                      :format => "%u%n", :delimiter => ',', :separator => '.', :sign => "$", :iso_code => "USD", :fractional_monitary_unit => "Cent", :number_to_basic => "100"},
     :aud => {:position => 2,   :name => "Australian Dollar",                         :format => "%u%n", :delimiter => ',', :separator => '.', :sign => "$", :iso_code => "AUD", :fractional_monitary_unit => "Cent", :number_to_basic => "100"},

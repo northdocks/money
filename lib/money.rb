@@ -119,7 +119,7 @@ class Money
       :delimiter => curr.delimiter,
       :format => curr.format,
       :unit => (curr.unit unless rules.include?(:no_sign)),
-      :precision => (0 if rules.include?(:no_cents))
+      :precision => (rules.include?(:no_cents) ? 0 : curr.precision)
     }
 
     formatted = number_to_currency(cents/100.0, options)
