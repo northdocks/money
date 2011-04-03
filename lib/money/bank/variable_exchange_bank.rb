@@ -6,25 +6,24 @@
 #  Money.us_dollar(100).exchange_to("CAD") => Money.ca_dollar(124)
 #  Money.ca_dollar(100).exchange_to("USD") => Money.us_dollar(80)
 class VariableExchangeBank
-   
+
   def add_rate(from, to, rate)
     rates["#{from}_TO_#{to}".upcase] = rate
   end
-  
+
   def get_rate(from, to)
-    rates["#{from}_TO_#{to}".upcase] 
+    rates["#{from}_TO_#{to}".upcase] or raise Money::MoneyError.new("Can't find required exchange rate: #{from} to #{to}")
   end
-  
+
   def exchange(money, currency)
-    rate = get_rate(money.currency, currency) or raise Money::MoneyError.new("Can't find required exchange rate")
-    
+    rate = get_rate(money.currency, currency)
     Money.new((money.cents * rate).floor, currency, money.precision)
   end
-  
+
   private
-  
+
   def rates
-    @rates ||= {} 
+    @rates ||= {}
   end
-  
+
 end
