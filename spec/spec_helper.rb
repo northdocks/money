@@ -1,7 +1,9 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 require 'rspec'
-require 'active_support/core_ext/class'
+require 'active_support'
+require 'active_record'
+require 'action_view'
 require 'money'
 
 # Requires supporting files with custom matchers and macros, etc,
