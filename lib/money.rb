@@ -99,12 +99,14 @@ class Money
   #  Money.ca_dollar(100).format(:with_currency) => "$1.00 CAD"
   #  Money.us_dollar(85).format(:with_currency) => "$0.85 USD"
   #
-  # no_cents:
+  # no_cents (rounds):
   #
   #  Money.ca_dollar(100).format(:no_cents) => "$1"
-  #  Money.ca_dollar(599).format(:no_cents) => "$5"
+  #  Money.ca_dollar(501).format(:no_cents) => "$5"
+  #  Money.ca_dollar(599).format(:no_cents) => "$6"
   #
-  #  Money.ca_dollar(570).format(:no_cents, :with_currency) => "$5 CAD"
+  #  Money.ca_dollar(520).format(:no_cents, :with_currency) => "$5 CAD"
+  #  Money.ca_dollar(570).format(:no_cents, :with_currency) => "$6 CAD"
   #  Money.ca_dollar(39000).format(:no_cents) => "$390"
   #
   # html:
@@ -123,13 +125,16 @@ class Money
     }
 
     formatted = number_to_currency(cents/100.0, options)
+
     if rules.include?(:with_currency)
-      formatted << " "
-      formatted << '<span class="currency">' if rules.include?(:html)
-      formatted << currency
-      formatted << '</span>' if rules.include?(:html)
+      if rules.include?(:html)
+        "#{ERB::Util.html_escape(formatted)} <span class=\"currency\">#{ERB::Util.html_escape(currency)}</span>".html_safe
+      else
+        "#{formatted} #{currency}"
+      end
+    else
+      formatted
     end
-    return formatted
   end
 
   # Money.ca_dollar(100).to_s => "1.00"
