@@ -35,11 +35,11 @@ class String
   #
   def to_money(precision = nil)
     # Get the currency
-    matches = scan /([A-Z]{2,3})/ 
-    currency = matches[0] ? matches[0][0] : Money.default_currency
-    
+    matches = scan /([A-Z]{2,3})/
+    currency = matches.flatten.first || Money.default_currency
+
     if !precision
-      precision = scan(/\.(\d+)/).to_s.length
+      precision = scan(/\.(\d+)/).flatten.first.to_s.length
       precision = 2 if precision < 2
     end
 

@@ -2,7 +2,10 @@ require 'money/bank/no_exchange_bank'
 require 'money/bank/variable_exchange_bank'
 require 'money/core_extensions'
 require 'currency'
-require 'money/rails'
+
+require 'rails'
+require 'action_view'
+require 'money/rails' if defined?(ActiveRecord::Base)
 
 class Money
   include Comparable
@@ -199,7 +202,7 @@ class Money
     exchange_to("EUR")
   end
 
-  # Conversation to self
+  # Conversion to self
   def to_money(precision = nil)
     precision ? to_precision(precision) : self
   end
